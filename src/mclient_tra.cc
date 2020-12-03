@@ -4,7 +4,7 @@
 #include <sstream>
 #include <string>
 
-const bool __debug = true;
+const unsigned int __debug = -1;
 const char* __whitespace = " \t\n\r\f\v";
 
 inline std::string& rtrim(std::string& s, const char* t = __whitespace)
@@ -43,11 +43,6 @@ std::string join_lines(std::string text)
 
 std::string evaluate_query(std::string query, std::string opt = "")
 {
-	if (__debug)
-	{
-		std::cerr << "Evaluating: " << query << std::endl;
-	}
-
 	std::array<char, 1024> buffer;
 	std::string result;
 	std::string command = "mclient " + opt + " -s'" + query + "'";
@@ -116,11 +111,6 @@ std::string get_matrix(std::string query, std::smatch match)
 	auto i = query.begin() + match.position() + match.length();
 	auto j = get_symbol(i, query.begin(), query.end());
 
-	if (__debug)
-	{
-		std::cerr << "Matrix Symbol: " << std::string(i+1, j-1) << std::endl;
-	}
-
 	return std::string(++i, --j);
 }
 
@@ -129,11 +119,6 @@ std::string get_matrix_relation(std::string matrix)
 	auto i = matrix.begin();
 	auto j = get_symbol(i, matrix.begin(), matrix.end());
 
-	if (__debug)
-	{
-		std::cerr << "Matrix Relation: " << std::string(i, j) << std::endl;
-	}
-
 	return std::string(i, j);
 }
 
@@ -141,11 +126,6 @@ std::string get_matrix_order(std::string matrix)
 {
 	auto i = matrix.end() - 1;
 	auto j = get_symbol(i, matrix.begin(), matrix.end());
-
-	if (__debug)
-	{
-		std::cerr << "Matrix Order: " << std::string(i, j) << std::endl;
-	}
 
 	return std::string(i, j);
 }
@@ -183,11 +163,31 @@ int main(int argc, char** argv)
 	auto matrix_rel = get_matrix_relation(matrix);
 	auto matrix_ord = get_matrix_order(matrix);
 
-	auto phase_1 = get_phase1_query(matrix_rel, matrix_ord);
-	auto output_1 = evaluate_query(phase_1, "-fcsv");
+	if (__debug > 0)
+	{
+		std::cerr << "Matrix Symbol:     " << matrix     << std::endl
+		          << "Matrix Relation:   " << matrix_rel << std::endl
+		          << "Matrix Order:      " << matrix_ord << std::endl;
+	}
 
+	auto phase_1 = get_phase1_query(matrix_rel, matrix_ord);
+	if (__debug > 1)
+	{
+		std::cerr << "Evaluating:        " << phase_1 << std::endl;
+	}
+	auto output_1 = evaluate_query(phase_1, "-fcsv");
 	auto attr = join_lines(output_1);
+
+	if (__debug > 0)
+	{
+		std::cerr << "Matrix Attributes: " << attr       << std::endl;
+	}
+
 	auto phase_2 = get_phase2_query(query, match, attr);
+	if (__debug > 1)
+	{
+		std::cerr << "Evaluating:        " << phase_2 << std::endl;
+	}
 	std::cout << evaluate_query(phase_2, opt);
 
 	return 0;
