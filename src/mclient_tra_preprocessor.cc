@@ -27,25 +27,25 @@ inline std::string& trim(std::string& s, const char* t = __whitespace)
 inline std::string& clean(std::string& s)
 {
 	std::replace(s.begin(), s.end(), '\n', ' ');
-	std::regex line("  *");
-	s = std::regex_replace(s, line, " ");
+	std::regex multi_space("  *");
+	s = std::regex_replace(s, multi_space, " ");
 	return s;
 }
 
-std::string join_lines(std::string text)
+inline std::string join_lines(std::string text)
 {
-	std::replace(text.begin(), text.end(), '\n', ',');
-	std::regex line("([^,]*)(.)");
-	text = std::regex_replace(text, line, "\"$1\"$2");
+	std::regex endline("\n");
+	text = std::regex_replace(text, endline, ", ");
+	text.pop_back();
 	text.pop_back();
 	return text;
 }
 
-std::string evaluate_query(std::string query, std::string opt = "")
+std::string evaluate_query(std::string query, std::string cmd = "mclient -fcsv")
 {
 	std::array<char, 1024> buffer;
 	std::string result;
-	std::string command = "mclient " + opt + " -s'" + query + "'";
+	std::string command = cmd + " -s'" + query + "'";
 	std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "r"), pclose);
 
 	if (!pipe)
@@ -89,9 +89,10 @@ std::string::iterator get_symbol(std::string::iterator& i, std::string::iterator
 	return j;
 }
 
-std::string get_phase1_query(std::string rel, std::string order)
+std::string get_phase1_query(std::string rel, std::string order, std::string with = "")
 {
-	return "SELECT " + order + " FROM " + rel
+	return (with.empty() ? "" : with + " ")
+		+ "SELECT " + order + " FROM " + rel
 		+ " AS tmp ORDER BY " + order + ";";
 }
 
@@ -144,18 +145,18 @@ int main(int argc, char** argv)
 	clean(query);
 	auto match = is_tra_query(query);
 
-	std::string opt;
+	std::string cmd;
 	for (int i = 1; i < argc; ++i)
 	{
-		opt += " ";
-		opt += argv[i];
+		cmd += " ";
+		cmd += argv[i];
 	}
-	trim(opt);
-	clean(opt);
+	trim(cmd);
+	clean(cmd);
 
 	if (match.position() == query.length())
 	{
-		std::cout << evaluate_query(query, opt);
+		std::cout << query << std::endl;
 		return 0;
 	}
 
@@ -175,7 +176,7 @@ int main(int argc, char** argv)
 	{
 		std::cerr << "Evaluating:        " << phase_1 << std::endl;
 	}
-	auto output_1 = evaluate_query(phase_1, "-fcsv");
+	auto output_1 = evaluate_query(phase_1);
 	auto attr = join_lines(output_1);
 
 	if (__debug > 0)
@@ -184,11 +185,7 @@ int main(int argc, char** argv)
 	}
 
 	auto phase_2 = get_phase2_query(query, match, attr);
-	if (__debug > 1)
-	{
-		std::cerr << "Evaluating:        " << phase_2 << std::endl;
-	}
-	std::cout << evaluate_query(phase_2, opt);
+	std::cout << phase_2 << std::endl;
 
 	return 0;
 }
