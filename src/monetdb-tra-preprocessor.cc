@@ -32,15 +32,6 @@ inline std::string& clean(std::string& s)
 	return s;
 }
 
-inline std::string join_lines(std::string text)
-{
-	std::regex endline("\n");
-	text = std::regex_replace(text, endline, ", ");
-	text.pop_back();
-	text.pop_back();
-	return text;
-}
-
 std::string evaluate_query(std::string query, std::string cmd = "mclient -fcsv")
 {
 	std::array<char, 1024> buffer;
@@ -96,17 +87,6 @@ std::string get_phase1_query(std::string rel, std::string order, std::string wit
 		+ " AS tmp ORDER BY " + order + ";";
 }
 
-std::string get_phase2_query(std::string query, std::smatch match, std::string attributes)
-{
-	auto i = query.begin() + match.position() + match.length();
-	auto j = get_symbol(i, query.begin(), query.end());
-
-	return query.substr(0, j - query.begin())
-		+ " USING ("
-		+ attributes + ")"
-		+ query.substr(j - query.begin(), query.length());
-}
-
 std::string get_matrix(std::string query, std::smatch match)
 {
 	auto i = query.begin() + match.position() + match.length();
@@ -140,23 +120,18 @@ std::smatch is_tra_query(std::string query)
 
 int main(int argc, char** argv)
 {
-	std::string query(std::istreambuf_iterator<char>(std::cin), {});
+	std::string query;
+	for (int i = 1; i < argc; ++i)
+	{
+		query += " ";
+		query += argv[i];
+	}
 	trim(query);
 	clean(query);
 	auto match = is_tra_query(query);
 
-	std::string cmd;
-	for (int i = 1; i < argc; ++i)
-	{
-		cmd += " ";
-		cmd += argv[i];
-	}
-	trim(cmd);
-	clean(cmd);
-
 	if (match.position() == query.length())
 	{
-		std::cout << query << std::endl;
 		return 0;
 	}
 
@@ -177,15 +152,7 @@ int main(int argc, char** argv)
 		std::cerr << "Evaluating:        " << phase_1 << std::endl;
 	}
 	auto output_1 = evaluate_query(phase_1);
-	auto attr = join_lines(output_1);
-
-	if (__debug > 0)
-	{
-		std::cerr << "Matrix Attributes: " << attr       << std::endl;
-	}
-
-	auto phase_2 = get_phase2_query(query, match, attr);
-	std::cout << phase_2 << std::endl;
+	std::cout << output_1;
 
 	return 0;
 }

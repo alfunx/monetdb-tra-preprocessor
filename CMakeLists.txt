@@ -1,21 +1,21 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(mclient_tra_preprocessor)
+project(monetdb-tra-preprocessor)
 set(CMAKE_CXX_STANDARD 20)
 
 # Debug
 set(CMAKE_BUILD_TYPE Debug)
 
 # Executables
-set(mclient_tra_preprocessor "mclient_tra_preprocessor")
+set(monetdb-tra-preprocessor "monetdb-tra-preprocessor")
 
 # Main
-file(GLOB mclient_tra_preprocessor_SRC
-    "src/mclient_tra_preprocessor.cc"
+file(GLOB monetdb-tra-preprocessor_SRC
+    "src/monetdb-tra-preprocessor.cc"
 )
-add_executable(${mclient_tra_preprocessor}
-    ${mclient_tra_preprocessor_SRC}
+add_executable(${monetdb-tra-preprocessor}
+    ${monetdb-tra-preprocessor_SRC}
 )
-target_link_libraries(${mclient_tra_preprocessor}
+target_link_libraries(${monetdb-tra-preprocessor}
 )
 
 # Headers
